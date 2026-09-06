@@ -1,9 +1,16 @@
-package net.canyonwolf;
+package net.canyonwolf.cli;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.util.Scanner;
 import javax.print.PrintService;
+import net.canyonwolf.config.AppConfig;
+import net.canyonwolf.config.ConfigManager;
+import net.canyonwolf.format.MessageFormatter;
+import net.canyonwolf.model.ConnectionType;
+import net.canyonwolf.model.PrinterType;
+import net.canyonwolf.model.TextMessage;
+import net.canyonwolf.printer.DesktopPrinterService;
+import net.canyonwolf.printer.PrinterFactory;
+import net.canyonwolf.printer.PrinterService;
 
 public class TextingConsole {
     private final ConfigManager configManager;

@@ -1,8 +1,11 @@
-package net.canyonwolf;
+package net.canyonwolf.printer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import net.canyonwolf.config.AppConfig;
+import net.canyonwolf.format.MessageFormatter;
+import net.canyonwolf.model.TextMessage;
 
 public class ReceiptPrinterService implements PrinterService {
 

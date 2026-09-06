@@ -1,6 +1,5 @@
-package net.canyonwolf;
+package net.canyonwolf.printer;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -17,6 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
+import net.canyonwolf.config.AppConfig;
+import net.canyonwolf.format.MessageFormatter;
+import net.canyonwolf.model.TextMessage;
 
 public class DesktopPrinterService implements PrinterService {
 

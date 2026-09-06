@@ -1,11 +1,11 @@
-package net.canyonwolf;
+package net.canyonwolf.printer;
 
-import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import net.canyonwolf.config.AppConfig;
+import net.canyonwolf.model.ConnectionType;
 
 public class PrinterStreamFactory {
 

@@ -1,7 +1,8 @@
-package net.canyonwolf;
+package net.canyonwolf.model;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import net.canyonwolf.format.MessageFormatter;
 
 public class TextMessage {
     private final String sender;

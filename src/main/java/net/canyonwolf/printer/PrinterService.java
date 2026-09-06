@@ -1,4 +1,6 @@
-package net.canyonwolf;
+package net.canyonwolf.printer;
+
+import net.canyonwolf.model.TextMessage;
 
 public interface PrinterService extends AutoCloseable {
     void printMessage(TextMessage message) throws Exception;

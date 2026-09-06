@@ -1,4 +1,4 @@
-package net.canyonwolf;
+package net.canyonwolf.model;
 
 public enum ConnectionType {
     IP("Network / IP (Ethernet / Wi-Fi)"),

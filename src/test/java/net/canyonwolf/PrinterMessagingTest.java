@@ -5,6 +5,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Properties;
+import net.canyonwolf.config.AppConfig;
+import net.canyonwolf.config.ConfigManager;
+import net.canyonwolf.format.MessageFormatter;
+import net.canyonwolf.model.ConnectionType;
+import net.canyonwolf.model.PrinterType;
+import net.canyonwolf.model.TextMessage;
+import net.canyonwolf.printer.DesktopPrinterService;
+import net.canyonwolf.printer.PrinterFactory;
+import net.canyonwolf.printer.PrinterService;
+import net.canyonwolf.printer.ReceiptPrinterService;
 
 public class PrinterMessagingTest {
 

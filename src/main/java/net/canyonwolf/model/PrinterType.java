@@ -1,4 +1,4 @@
-package net.canyonwolf;
+package net.canyonwolf.model;
 
 public enum PrinterType {
     RECEIPT("Receipt Printer (ESC/POS Thermal)"),

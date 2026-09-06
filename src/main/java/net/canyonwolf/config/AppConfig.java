@@ -1,6 +1,8 @@
-package net.canyonwolf;
+package net.canyonwolf.config;
 
 import java.util.Properties;
+import net.canyonwolf.model.ConnectionType;
+import net.canyonwolf.model.PrinterType;
 
 public class AppConfig {
     public static final String KEY_PRINTER_TYPE = "printer.type";

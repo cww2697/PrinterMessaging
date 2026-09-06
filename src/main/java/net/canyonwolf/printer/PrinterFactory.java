@@ -1,4 +1,7 @@
-package net.canyonwolf;
+package net.canyonwolf.printer;
+
+import net.canyonwolf.config.AppConfig;
+import net.canyonwolf.model.PrinterType;
 
 public class PrinterFactory {
     public static PrinterService createPrinterService(AppConfig config) {

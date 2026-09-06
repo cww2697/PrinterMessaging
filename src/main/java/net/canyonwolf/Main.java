@@ -1,6 +1,11 @@
 package net.canyonwolf;
 
 import java.util.Scanner;
+import net.canyonwolf.cli.TextingConsole;
+import net.canyonwolf.config.AppConfig;
+import net.canyonwolf.config.ConfigManager;
+import net.canyonwolf.model.ConnectionType;
+import net.canyonwolf.model.PrinterType;
 
 public class Main {
     public static void main(String[] args) {

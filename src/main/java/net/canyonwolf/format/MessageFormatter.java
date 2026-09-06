@@ -1,15 +1,12 @@
-package net.canyonwolf;
+package net.canyonwolf.format;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+import net.canyonwolf.model.TextMessage;
 
 public class MessageFormatter {
 
-    /**
-     * Converts any string to strictly standard ASCII (0x00 - 0x7F) characters.
-     * Replaces smart quotes, dashes, bullets, accented characters, etc. with ASCII equivalents.
-     */
     public static String toAscii(String input) {
         if (input == null) return "";
 
@@ -126,7 +123,7 @@ public class MessageFormatter {
 
     public static String formatBoxedMessage(TextMessage message, int width) {
         if (width < 20) width = 42;
-        int innerWidth = width - 4; // 2 for borders, 2 for padding
+        int innerWidth = width - 4;
 
         StringBuilder sb = new StringBuilder();
         String horizontalBorder = "+" + repeat("-", width - 2) + "+";

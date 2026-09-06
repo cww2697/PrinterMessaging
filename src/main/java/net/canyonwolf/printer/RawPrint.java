@@ -1,9 +1,10 @@
-package net.canyonwolf;
+package net.canyonwolf.printer;
 
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import net.canyonwolf.format.MessageFormatter;
 
 public class RawPrint implements AutoCloseable {
 

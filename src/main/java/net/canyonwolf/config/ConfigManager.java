@@ -1,4 +1,4 @@
-package net.canyonwolf;
+package net.canyonwolf.config;
 
 import java.io.File;
 import java.io.FileInputStream;
