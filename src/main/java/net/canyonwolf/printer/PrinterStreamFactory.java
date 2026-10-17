@@ -58,6 +58,10 @@ public class PrinterStreamFactory {
                 throw new IllegalArgumentException(connType.getDisplayName() + " address/device path is not configured");
             }
 
+            if (connType == ConnectionType.SERIAL) {
+                configureSerialPort(address, config.getBaudRate());
+            }
+
             String path = address;
             if (System.getProperty("os.name", "").toLowerCase().contains("win")) {
                 if (path.toUpperCase().matches("^COM[0-9]+$")) {
@@ -69,6 +73,52 @@ public class PrinterStreamFactory {
             return new StreamHandle(fos, fos);
         } else {
             throw new UnsupportedOperationException("Unsupported connection type: " + connType);
+        }
+    }
+
+    public static void configureSerialPort(String address, int baudRate) {
+        if (address == null || address.trim().isEmpty()) return;
+        String os = System.getProperty("os.name", "").toLowerCase();
+        int baud = baudRate > 0 ? baudRate : 9600;
+
+        try {
+            if (os.contains("win")) {
+                String cleanPort = address.trim().replaceAll("^[\\\\.]+\\\\", "");
+                if (cleanPort.toUpperCase().matches("^COM[0-9]+$")) {
+                    ProcessBuilder pb = new ProcessBuilder(
+                            "mode.com",
+                            cleanPort.toUpperCase() + ":",
+                            "BAUD=" + baud,
+                            "PARITY=N",
+                            "DATA=8",
+                            "STOP=1",
+                            "to=off",
+                            "xon=off",
+                            "odsr=off",
+                            "octs=off",
+                            "dtr=on",
+                            "rts=on"
+                    );
+                    pb.redirectErrorStream(true);
+                    Process process = pb.start();
+                    process.waitFor(2, java.util.concurrent.TimeUnit.SECONDS);
+                }
+            } else {
+                ProcessBuilder pb = new ProcessBuilder(
+                        "stty",
+                        "-F",
+                        address.trim(),
+                        String.valueOf(baud),
+                        "cs8",
+                        "-cstopb",
+                        "-parenb"
+                );
+                pb.redirectErrorStream(true);
+                Process process = pb.start();
+                process.waitFor(2, java.util.concurrent.TimeUnit.SECONDS);
+            }
+        } catch (Exception ignored) {
+            // Silently ignore if port tool not available or fails
         }
     }
 }

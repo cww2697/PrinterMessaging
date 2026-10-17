@@ -15,6 +15,7 @@ import net.canyonwolf.printer.DesktopPrinterService;
 import net.canyonwolf.printer.PrinterFactory;
 import net.canyonwolf.printer.PrinterService;
 import net.canyonwolf.printer.ReceiptPrinterService;
+import net.canyonwolf.printer.VerifonePrinterService;
 
 public class PrinterMessagingTest {
 
@@ -31,7 +32,10 @@ public class PrinterMessagingTest {
             testAsciiConversion();
             testReceiptPayloadGeneration();
             testPrinterFactorySelection();
-            System.out.println("ALL 10 TEST SUITES PASSED SUCCESSFULLY!");
+            testVerifonePrinterTypeAndPayload();
+            testVerifoneChunking();
+            testPrinterTypeFromString();
+            System.out.println("ALL 13 TEST SUITES PASSED SUCCESSFULLY!");
         } catch (Throwable t) {
             System.err.println("TEST FAILURE: " + t.getMessage());
             t.printStackTrace();
@@ -45,6 +49,7 @@ public class PrinterMessagingTest {
         assertEq(ConnectionType.IP, config.getConnectionType(), "Default connection type should be IP");
         assertEq("192.168.2.26", config.getAddress(), "Default IP address");
         assertEq(9100, config.getPort(), "Default port should be 9100");
+        assertEq(9600, config.getBaudRate(), "Default baud rate should be 9600");
         assertEq("User", config.getSenderName(), "Default sender name");
         assertTrue(config.isAutoCut(), "Auto cut should default to true");
         assertEq(4, config.getFeedLines(), "Feed lines should default to 4");
@@ -54,8 +59,9 @@ public class PrinterMessagingTest {
     public static void testAppConfigProperties() {
         AppConfig config = new AppConfig();
         config.setPrinterType(PrinterType.DESKTOP);
-        config.setConnectionType(ConnectionType.USB);
-        config.setAddress("/dev/usb/lp0");
+        config.setConnectionType(ConnectionType.SERIAL);
+        config.setAddress("COM2");
+        config.setBaudRate(115200);
         config.setSenderName("Alice");
         config.setAutoCut(false);
         config.setFeedLines(2);
@@ -65,12 +71,14 @@ public class PrinterMessagingTest {
         AppConfig reloaded = AppConfig.fromProperties(props);
 
         assertEq(PrinterType.DESKTOP, reloaded.getPrinterType(), "PrinterType roundtrip");
-        assertEq(ConnectionType.USB, reloaded.getConnectionType(), "ConnectionType roundtrip");
-        assertEq("/dev/usb/lp0", reloaded.getAddress(), "Address roundtrip");
+        assertEq(ConnectionType.SERIAL, reloaded.getConnectionType(), "ConnectionType roundtrip");
+        assertEq("COM2", reloaded.getAddress(), "Address roundtrip");
+        assertEq(115200, reloaded.getBaudRate(), "BaudRate roundtrip");
         assertEq("Alice", reloaded.getSenderName(), "Sender name roundtrip");
         assertTrue(!reloaded.isAutoCut(), "AutoCut roundtrip");
         assertEq(2, reloaded.getFeedLines(), "Feed lines roundtrip");
         assertEq("HP LaserJet", reloaded.getDesktopPrinterName(), "Desktop printer name roundtrip");
+        assertTrue(reloaded.getSummary().contains("Baud Rate:       115200"), "Summary should contain baud rate");
         System.out.println("✓ testAppConfigProperties passed");
     }
 
@@ -83,6 +91,7 @@ public class PrinterMessagingTest {
         config.setPrinterType(PrinterType.RECEIPT);
         config.setConnectionType(ConnectionType.SERIAL);
         config.setAddress("COM3");
+        config.setBaudRate(19200);
         config.setSenderName("Bob");
 
         boolean saved = manager.saveConfig(config);
@@ -96,6 +105,7 @@ public class PrinterMessagingTest {
         assertEq(PrinterType.RECEIPT, loaded.getPrinterType(), "Loaded printer type");
         assertEq(ConnectionType.SERIAL, loaded.getConnectionType(), "Loaded connection type");
         assertEq("COM3", loaded.getAddress(), "Loaded COM address");
+        assertEq(19200, loaded.getBaudRate(), "Loaded baud rate");
         assertEq("Bob", loaded.getSenderName(), "Loaded sender name");
         System.out.println("✓ testConfigManagerSaveAndLoad passed");
     }
@@ -208,11 +218,86 @@ public class PrinterMessagingTest {
         PrinterService rService = PrinterFactory.createPrinterService(receiptConfig);
         assertTrue(rService instanceof ReceiptPrinterService, "Should create ReceiptPrinterService");
 
+        AppConfig verifoneConfig = new AppConfig();
+        verifoneConfig.setPrinterType(PrinterType.VERIFONE);
+        PrinterService vService = PrinterFactory.createPrinterService(verifoneConfig);
+        assertTrue(vService instanceof VerifonePrinterService, "Should create VerifonePrinterService");
+
         AppConfig desktopConfig = new AppConfig();
         desktopConfig.setPrinterType(PrinterType.DESKTOP);
         PrinterService dService = PrinterFactory.createPrinterService(desktopConfig);
         assertTrue(dService instanceof DesktopPrinterService, "Should create DesktopPrinterService");
         System.out.println("✓ testPrinterFactorySelection passed");
+    }
+
+    public static void testVerifonePrinterTypeAndPayload() {
+        AppConfig config = new AppConfig();
+        config.setPrinterType(PrinterType.VERIFONE);
+        config.setConnectionType(ConnectionType.SERIAL);
+        config.setAddress("COM1");
+        config.setBaudRate(1200);
+        config.setReceiptWidth(40);
+        config.setFeedLines(2);
+        config.setSenderName("VeriUser");
+
+        VerifonePrinterService service = new VerifonePrinterService(config);
+        TextMessage msg = new TextMessage("VeriUser", "Hello Verifone 900 Printer!");
+        byte[] payload = service.buildPayload(msg);
+
+        assertTrue(payload != null && payload.length > 0, "Payload must not be empty");
+        String payloadStr = new String(payload, java.nio.charset.StandardCharsets.US_ASCII);
+
+        assertTrue(payloadStr.contains("NEW TEXT MESSAGE"), "Should contain receipt header");
+        assertTrue(payloadStr.contains("FROM: VeriUser"), "Should contain sender");
+        assertTrue(payloadStr.contains("Hello Verifone 900 Printer!"), "Should contain message body");
+        assertTrue(payloadStr.endsWith("\r\n\r\n"), "Should end with feed lines");
+
+        // Verify NO ESC/POS binary sequences (e.g. 0x1B @ or GS V)
+        for (byte b : payload) {
+            assertTrue(b == '\r' || b == '\n' || (b >= 32 && b <= 126), "Payload should only contain printable ASCII and CRLF");
+        }
+
+        assertTrue(config.getSummary().contains("Receipt Width:   40 cols"), "Summary includes width");
+        assertTrue(config.getSummary().contains("Baud Rate:       1200"), "Summary includes baud rate");
+        System.out.println("✓ testVerifonePrinterTypeAndPayload passed");
+    }
+
+    public static void testVerifoneChunking() {
+        String testData = "Line 1\r\nLine 2\r\nLine 3\r\nLine 4\r\nLine 5\r\nLine 6\r\nLine 7\r\n";
+        byte[] payload = testData.getBytes(java.nio.charset.StandardCharsets.US_ASCII);
+        java.util.List<byte[]> chunks = VerifonePrinterService.splitIntoChunks(payload, 3);
+
+        // Expect 3 chunks: lines 1-3, lines 4-6, line 7
+        assertEq(3, chunks.size(), "Should split 7 lines into 3 chunks with chunk limit of 3");
+
+        String chunk0 = new String(chunks.get(0), java.nio.charset.StandardCharsets.US_ASCII);
+        String chunk1 = new String(chunks.get(1), java.nio.charset.StandardCharsets.US_ASCII);
+        String chunk2 = new String(chunks.get(2), java.nio.charset.StandardCharsets.US_ASCII);
+
+        assertEq("Line 1\r\nLine 2\r\nLine 3\r\n", chunk0, "Chunk 0 matches");
+        assertEq("Line 4\r\nLine 5\r\nLine 6\r\n", chunk1, "Chunk 1 matches");
+        assertEq("Line 7\r\n", chunk2, "Chunk 2 matches");
+
+        // Verify reconstructing equals original
+        StringBuilder reconstructed = new StringBuilder();
+        for (byte[] chunk : chunks) {
+            reconstructed.append(new String(chunk, java.nio.charset.StandardCharsets.US_ASCII));
+        }
+        assertEq(testData, reconstructed.toString(), "Reconstructed matches original");
+
+        System.out.println("✓ testVerifoneChunking passed");
+    }
+
+    public static void testPrinterTypeFromString() {
+        assertEq(PrinterType.VERIFONE, PrinterType.fromString("verifone"), "FromString 'verifone'");
+        assertEq(PrinterType.VERIFONE, PrinterType.fromString("Verifone Printer 900"), "FromString 'Verifone Printer 900'");
+        assertEq(PrinterType.VERIFONE, PrinterType.fromString("p900"), "FromString 'p900'");
+        assertEq(PrinterType.VERIFONE, PrinterType.fromString("p250"), "FromString 'p250'");
+        assertEq(PrinterType.VERIFONE, PrinterType.fromString("250"), "FromString '250'");
+        assertEq(PrinterType.VERIFONE, PrinterType.fromString("dot matrix"), "FromString 'dot matrix'");
+        assertEq(PrinterType.RECEIPT, PrinterType.fromString("receipt"), "FromString 'receipt'");
+        assertEq(PrinterType.DESKTOP, PrinterType.fromString("desktop"), "FromString 'desktop'");
+        System.out.println("✓ testPrinterTypeFromString passed");
     }
 
     private static void assertEq(Object expected, Object actual, String message) {

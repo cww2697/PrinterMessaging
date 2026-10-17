@@ -72,6 +72,15 @@ public class Main {
                         } catch (NumberFormatException ignored) {}
                     }
                     break;
+                case "--baud":
+                case "--baudrate":
+                case "-b":
+                    if (i + 1 < args.length) {
+                        try {
+                            config.setBaudRate(Integer.parseInt(args[++i]));
+                        } catch (NumberFormatException ignored) {}
+                    }
+                    break;
                 case "--sender":
                 case "-m":
                     if (i + 1 < args.length) {
@@ -140,10 +149,11 @@ public class Main {
         System.out.println("  java -jar PrinterMessaging.jar --status           Show current settings");
         System.out.println("  java -jar PrinterMessaging.jar --test             Send a test print");
         System.out.println("\nOptions:");
-        System.out.println("  --type <receipt|desktop>                          Set printer type");
+        System.out.println("  --type <receipt|verifone|desktop>                 Set printer type");
         System.out.println("  --conn <ip|usb|serial>                            Set connection type");
         System.out.println("  --ip, --address <address>                         Set IP / USB / Serial address");
         System.out.println("  --port <port>                                     Set port (for IP, e.g. 9100)");
+        System.out.println("  --baud, --baudrate <rate>                         Set baud rate (for Serial, e.g. 9600)");
         System.out.println("  --sender <name>                                   Set sender name");
         System.out.println("  --desktop-printer <name>                          Set desktop printer name");
         System.out.println("  --help, -h                                        Show this help message");

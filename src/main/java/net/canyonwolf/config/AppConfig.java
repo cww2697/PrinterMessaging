@@ -9,6 +9,7 @@ public class AppConfig {
     public static final String KEY_CONNECTION_TYPE = "connection.type";
     public static final String KEY_ADDRESS = "connection.address";
     public static final String KEY_PORT = "connection.port";
+    public static final String KEY_BAUD_RATE = "connection.baudRate";
     public static final String KEY_SENDER_NAME = "message.sender.name";
     public static final String KEY_RECEIPT_WIDTH = "receipt.width";
     public static final String KEY_AUTO_CUT = "receipt.autoCut";
@@ -19,6 +20,7 @@ public class AppConfig {
     private ConnectionType connectionType = ConnectionType.IP;
     private String address = "192.168.2.26";
     private int port = 9100;
+    private int baudRate = 9600;
     private String senderName = "User";
     private int receiptWidth = 42;
     private boolean autoCut = true;
@@ -51,6 +53,13 @@ public class AppConfig {
         if (portStr != null && !portStr.trim().isEmpty()) {
             try {
                 config.setPort(Integer.parseInt(portStr.trim()));
+            } catch (NumberFormatException ignored) {}
+        }
+
+        String baudStr = props.getProperty(KEY_BAUD_RATE);
+        if (baudStr != null && !baudStr.trim().isEmpty()) {
+            try {
+                config.setBaudRate(Integer.parseInt(baudStr.trim()));
             } catch (NumberFormatException ignored) {}
         }
 
@@ -92,6 +101,7 @@ public class AppConfig {
         props.setProperty(KEY_CONNECTION_TYPE, connectionType.name());
         props.setProperty(KEY_ADDRESS, address != null ? address : "");
         props.setProperty(KEY_PORT, String.valueOf(port));
+        props.setProperty(KEY_BAUD_RATE, String.valueOf(baudRate));
         props.setProperty(KEY_SENDER_NAME, senderName != null ? senderName : "User");
         props.setProperty(KEY_RECEIPT_WIDTH, String.valueOf(receiptWidth));
         props.setProperty(KEY_AUTO_CUT, String.valueOf(autoCut));
@@ -134,6 +144,16 @@ public class AppConfig {
 
     public void setPort(int port) {
         this.port = port;
+    }
+
+    public int getBaudRate() {
+        return baudRate;
+    }
+
+    public void setBaudRate(int baudRate) {
+        if (baudRate > 0) {
+            this.baudRate = baudRate;
+        }
     }
 
     public String getSenderName() {
@@ -191,13 +211,17 @@ public class AppConfig {
             sb.append("USB Device/Name: ").append(address).append("\n");
         } else if (connectionType == ConnectionType.SERIAL) {
             sb.append("Serial Port:     ").append(address).append("\n");
+            sb.append("Baud Rate:       ").append(baudRate).append("\n");
         }
         if (printerType == PrinterType.DESKTOP && desktopPrinterName != null && !desktopPrinterName.isEmpty()) {
             sb.append("Desktop Printer: ").append(desktopPrinterName).append("\n");
         }
         sb.append("Sender Name:     ").append(senderName).append("\n");
-        if (printerType == PrinterType.RECEIPT) {
-            sb.append("Auto Cut Paper:  ").append(autoCut ? "Yes" : "No").append("\n");
+        if (printerType == PrinterType.RECEIPT || printerType == PrinterType.VERIFONE) {
+            if (printerType == PrinterType.RECEIPT) {
+                sb.append("Auto Cut Paper:  ").append(autoCut ? "Yes" : "No").append("\n");
+            }
+            sb.append("Receipt Width:   ").append(receiptWidth).append(" cols\n");
             sb.append("Feed Lines:      ").append(feedLines);
         }
         return sb.toString();

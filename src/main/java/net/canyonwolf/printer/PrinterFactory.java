@@ -11,6 +11,8 @@ public class PrinterFactory {
 
         if (config.getPrinterType() == PrinterType.DESKTOP) {
             return new DesktopPrinterService(config);
+        } else if (config.getPrinterType() == PrinterType.VERIFONE) {
+            return new VerifonePrinterService(config);
         } else {
             return new ReceiptPrinterService(config);
         }

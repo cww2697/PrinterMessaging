@@ -52,17 +52,17 @@ public class TextingConsole {
     }
 
     private void printBanner() {
-        System.out.println("=================================================");
+        System.out.println("===============================================");
         System.out.println("            PRINTER TEXTING SYSTEM               ");
         System.out.println("                                                 ");
-        System.out.println("=================================================");
+        System.out.println("===============================================");
     }
 
     public void printStatus() {
-        System.out.println("---------------- Current Settings ---------------");
+        System.out.println("--------------- Current Settings --------------");
         System.out.println(config.getSummary());
         System.out.println("Config file:     " + configManager.getConfigFile().getAbsolutePath());
-        System.out.println("-------------------------------------------------");
+        System.out.println("-----------------------------------------------");
     }
 
     private boolean handleCommand(String commandLine, Scanner scanner) {
@@ -139,12 +139,17 @@ public class TextingConsole {
 
         System.out.println("\nSelect Printer Type:");
         System.out.println("  1. Receipt Printer (ESC/POS Thermal)");
-        System.out.println("  2. Standard Desktop Printer (Page/Letter/A4)");
-        System.out.print("Choice [" + (config.getPrinterType() == PrinterType.RECEIPT ? "1" : "2") + "]: ");
+        System.out.println("  2. Verifone Printer (Printer 250 / 900 / Dot Matrix)");
+        System.out.println("  3. Standard Desktop Printer (Page/Letter/A4)");
+        int currentType = config.getPrinterType() == PrinterType.RECEIPT ? 1 :
+                         (config.getPrinterType() == PrinterType.VERIFONE ? 2 : 3);
+        System.out.print("Choice [" + currentType + "]: ");
         String pChoice = scanner.nextLine().trim();
         if ("1".equals(pChoice)) {
             config.setPrinterType(PrinterType.RECEIPT);
         } else if ("2".equals(pChoice)) {
+            config.setPrinterType(PrinterType.VERIFONE);
+        } else if ("3".equals(pChoice)) {
             config.setPrinterType(PrinterType.DESKTOP);
         }
 
@@ -194,6 +199,16 @@ public class TextingConsole {
             if (!addr.isEmpty()) {
                 config.setAddress(addr);
             }
+
+            System.out.print("Enter Baud Rate (e.g. 9600, 19200, 38400, 115200) [" + config.getBaudRate() + "]: ");
+            String baudStr = scanner.nextLine().trim();
+            if (!baudStr.isEmpty()) {
+                try {
+                    config.setBaudRate(Integer.parseInt(baudStr));
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid baud rate, keeping " + config.getBaudRate());
+                }
+            }
         }
 
         if (config.getPrinterType() == PrinterType.DESKTOP) {
@@ -230,11 +245,13 @@ public class TextingConsole {
             config.setSenderName(sName);
         }
 
-        if (config.getPrinterType() == PrinterType.RECEIPT) {
-            System.out.print("Auto-cut paper? (y/n) [" + (config.isAutoCut() ? "y" : "n") + "]: ");
-            String cutStr = scanner.nextLine().trim();
-            if (!cutStr.isEmpty()) {
-                config.setAutoCut(cutStr.equalsIgnoreCase("y") || cutStr.equalsIgnoreCase("yes"));
+        if (config.getPrinterType() == PrinterType.RECEIPT || config.getPrinterType() == PrinterType.VERIFONE) {
+            if (config.getPrinterType() == PrinterType.RECEIPT) {
+                System.out.print("Auto-cut paper? (y/n) [" + (config.isAutoCut() ? "y" : "n") + "]: ");
+                String cutStr = scanner.nextLine().trim();
+                if (!cutStr.isEmpty()) {
+                    config.setAutoCut(cutStr.equalsIgnoreCase("y") || cutStr.equalsIgnoreCase("yes"));
+                }
             }
 
             System.out.print("Receipt column width (characters) [" + config.getReceiptWidth() + "]: ");
